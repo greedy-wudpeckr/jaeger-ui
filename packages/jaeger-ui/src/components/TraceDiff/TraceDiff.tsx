@@ -42,11 +42,13 @@ type TStateProps = {
 type TDispatchProps = {
   fetchMultipleTraces: (ids: string[]) => void;
   forceState: (state: TTraceDiffState) => void;
+  navigate: (path: string) => void;
 };
 
 type TOwnProps = {
   history: RouterHistory;
   params: TDiffRouteParams;
+  navigate: (path: string) => void;
 };
 
 type TState = {
@@ -121,9 +123,9 @@ export class TraceDiffImpl extends React.PureComponent<TStateProps & TDispatchPr
 
   diffSetUrl(change: { newA?: string | TNil; newB?: string | TNil }) {
     const { newA, newB } = change;
-    const { a, b, cohort, history } = this.props;
+    const { a, b, cohort, navigate } = this.props;
     const url = getUrl({ a: newA || a, b: newB || b, cohort });
-    history.push(url);
+    navigate(url);
   }
 
   diffSetA = (id: string) => {
@@ -180,13 +182,12 @@ export function mapStateToProps(state: ReduxState, ownProps: TOwnProps) {
   };
 }
 
-// export for tests
-export function mapDispatchToProps(dispatch: Dispatch<any>) {
+
+export function mapDispatchToProps(dispatch: Dispatch<any>, ownProps: TOwnProps) {
   const { fetchMultipleTraces } = bindActionCreators(jaegerApiActions, dispatch);
   const { forceState } = bindActionCreators(diffActions, dispatch);
-  return { fetchMultipleTraces, forceState };
+  return { fetchMultipleTraces, forceState, navigate: ownProps.navigate };
 }
-
 export default withRouteProps(
   connect<TStateProps, TDispatchProps, TOwnProps, ReduxState>(
     mapStateToProps,

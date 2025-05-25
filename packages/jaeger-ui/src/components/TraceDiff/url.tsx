@@ -26,14 +26,24 @@ export type TDiffRouteParams = {
 
 export const ROUTE_PATH = prefixUrl('/trace/:a?\\.\\.\\.:b?');
 
-const ROUTE_MATCHER = { path: ROUTE_PATH, strict: true, exact: true };
+const ROUTE_MATCHER = { path: ROUTE_PATH, end: true, caseSensitive: false };
 
 export function matches(path: string) {
-  return Boolean(matchPath(path, ROUTE_MATCHER));
+  return Boolean(matchPath(ROUTE_MATCHER, path));
 }
 
-export function getUrl(state: TTraceDiffState) {
-  const { a = undefined, b = undefined, cohort } = getValidState(state);
-  const search = queryString.stringify({ cohort });
-  return prefixUrl(`/trace/${a || ''}...${b || ''}${search ? '?' : ''}${search}`);
+export function getUrl(data?: { cohort?: string[] } | null) {
+  const search = data && data.cohort && data.cohort.length >= 2 
+    ? queryString.stringify({ cohort: data.cohort[0] }) 
+    : '';
+    
+  const a = data?.cohort?.[0] || '';
+  const b = data?.cohort?.[1] || '';
+  
+  // CRITICAL FIX: Remove literal "..." from URL generation
+  if (!a && !b) {
+    return prefixUrl('/trace/'); // Fallback route for empty diff
+  }
+  
+  return prefixUrl(`/trace/${a}/${b}${search ? '?' : ''}${search}`);
 }

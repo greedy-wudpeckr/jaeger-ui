@@ -18,10 +18,10 @@ import prefixUrl from '../../utils/prefix-url';
 
 export const ROUTE_PATH = prefixUrl('/monitor');
 
-const ROUTE_MATCHER = { path: ROUTE_PATH, strict: true, exact: true };
+const ROUTE_MATCHER = { path: ROUTE_PATH, end: true, caseSensitive: false };
 
 export function matches(path: string) {
-  return Boolean(matchPath(path, ROUTE_MATCHER));
+  return Boolean(matchPath(ROUTE_MATCHER, path));
 }
 
 export function getUrl() {

@@ -28,10 +28,10 @@ function eqEq(a: string | number | null | undefined, b: string | number | null |
 
 export const ROUTE_PATH = prefixUrl('/search');
 
-const ROUTE_MATCHER = { path: ROUTE_PATH, strict: true, exact: true };
+const ROUTE_MATCHER = { path: ROUTE_PATH, end: true, caseSensitive: false };
 
 export function matches(path: string) {
-  return Boolean(matchPath(path, ROUTE_MATCHER));
+  return Boolean(matchPath(ROUTE_MATCHER, path));
 }
 
 type TUrlState = Record<string, string | string[] | undefined | Record<string, string>> & {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React, { Component } from 'react';
+import React from 'react';
 import { Provider } from 'react-redux';
-import { Route, Redirect, Switch, Router } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter } from 'react-router-dom';
 
 import { ConfigProvider } from 'antd';
 import { defaultTheme } from '@ant-design/compatible';
@@ -42,7 +42,7 @@ import '../common/vars.css';
 import '../common/utils.css';
 import 'antd/dist/reset.css';
 import './index.css';
-import { history, store } from '../../utils/configure-store';
+import { store } from '../../utils/configure-store';
 import { HistoryProvider } from '../../utils/useHistory';
 
 const jaegerTheme = {
@@ -77,62 +77,52 @@ const jaegerTheme = {
   },
 };
 
-export default class JaegerUIApp extends Component {
-  constructor(props) {
-    super(props);
+// CRITICAL FIX: Convert to functional component for React Router v6
+function JaegerUIApp() {
+  React.useEffect(() => {
     JaegerAPI.apiRoot = DEFAULT_API_ROOT;
     processScripts();
-  }
+  }, []);
 
-  render() {
-    return (
-      <ConfigProvider theme={jaegerTheme}>
-        <Provider store={store}>
-          <HistoryProvider history={history}>
-            <Router history={history}>
-              <Page>
-                <Switch>
-                  <Route path={searchPath}>
-                    <SearchTracePage />
-                  </Route>
-                  <Route path={traceDiffPath}>
-                    <TraceDiff />
-                  </Route>
-                  <Route path={tracePath}>
-                    <TracePage />
-                  </Route>
-                  <Route path={dependenciesPath}>
-                    <DependencyGraph />
-                  </Route>
-                  <Route path={deepDependenciesPath}>
-                    <DeepDependencies />
-                  </Route>
-                  <Route path={qualityMetricsPath}>
-                    <QualityMetrics />
-                  </Route>
-                  <Route path={monitorATMPath}>
-                    <MonitorATMPage />
-                  </Route>
+  // DEBUG: Log route paths to identify conflicts
+  console.log('🔍 DEBUG App Route Paths:', {
+    searchPath,
+    tracePath,
+    traceDiffPath,
+    dependenciesPath,
+    deepDependenciesPath,
+    qualityMetricsPath,
+    monitorATMPath,
+  });
 
-                  <Route exact path="/">
-                    <Redirect to={searchPath} />
-                  </Route>
-                  <Route exact path={prefixUrl()}>
-                    <Redirect to={searchPath} />
-                  </Route>
-                  <Route exact path={prefixUrl('/')}>
-                    <Redirect to={searchPath} />
-                  </Route>
+  return (
+    <ConfigProvider theme={jaegerTheme}>
+      <Provider store={store}>
+          <HistoryProvider>
+            <Page>
+              <Routes>
+                <Route path={searchPath} element={<SearchTracePage />} />
+                
+                {/* CRITICAL FIX: Most specific routes first */}
+                <Route path={tracePath} element={<TracePage />} />
+                <Route path={traceDiffPath} element={<TraceDiff />} />
+                
+                
+                <Route path={dependenciesPath} element={<DependencyGraph />} />
+                <Route path={deepDependenciesPath} element={<DeepDependencies />} />
+                <Route path={qualityMetricsPath} element={<QualityMetrics />} />
+                <Route path={monitorATMPath} element={<MonitorATMPage />} />
 
-                  <Route>
-                    <NotFound />
-                  </Route>
-                </Switch>
-              </Page>
-            </Router>
+                <Route path="/" element={<Navigate to={searchPath} replace />} />
+                <Route path={prefixUrl()} element={<Navigate to={searchPath} replace />} />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Page>
           </HistoryProvider>
-        </Provider>
-      </ConfigProvider>
-    );
-  }
+      </Provider>
+    </ConfigProvider>
+  );
 }
+
+export default JaegerUIApp;

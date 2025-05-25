@@ -64,6 +64,7 @@ type SearchResultsProps = {
   rawTraces: TraceData[];
   sortBy: string;
   handleSortChange: (sortBy: string) => void;
+  navigate: (path: string) => void;
 };
 
 type SelectSortProps = {
@@ -109,11 +110,11 @@ export class UnconnectedSearchResults extends React.PureComponent<SearchResultsP
   };
 
   onDdgViewClicked = () => {
-    const { location, history } = this.props;
+    const { location, navigate } = this.props;
     const urlState = queryString.parse(location.search);
     const view = urlState.view && urlState.view === 'ddg' ? EAltViewActions.Traces : EAltViewActions.Ddg;
     trackAltView(view);
-    history.push(getUrl({ ...urlState, view }));
+    navigate(getUrl({ ...urlState, view }));
   };
 
   onDownloadResultsClicked = () => {

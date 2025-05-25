@@ -17,7 +17,7 @@ import { Dropdown, Menu, MenuProps } from 'antd';
 import { IoChevronDown } from 'react-icons/io5';
 import _has from 'lodash/has';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import TraceIDSearchInput from './TraceIDSearchInput';
 import * as dependencyGraph from '../DependencyGraph/url';
@@ -41,11 +41,13 @@ const NAV_LINKS = [
     to: searchUrl.getUrl(),
     matches: searchUrl.matches,
     text: 'Search',
+    basePath: '/search',
   },
   {
     to: (props: Props) => diffUrl.getUrl(props.traceDiff),
     matches: diffUrl.matches,
     text: 'Compare',
+    basePath: '/trace-diff',
   },
 ];
 
@@ -54,6 +56,7 @@ if (getConfigValue('dependencies.menuEnabled')) {
     to: dependencyGraph.getUrl(),
     matches: dependencyGraph.matches,
     text: 'System Architecture',
+    basePath: '/dependencies',
   });
 }
 
@@ -62,6 +65,7 @@ if (getConfigValue('deepDependencies.menuEnabled')) {
     to: deepDependencies.getUrl(),
     matches: deepDependencies.matches,
     text: 'Service Dependencies',
+    basePath: '/deep-dependencies',
   });
 }
 
@@ -70,6 +74,7 @@ if (getConfigValue('qualityMetrics.menuEnabled')) {
     to: qualityMetrics.getUrl(),
     matches: qualityMetrics.matches,
     text: getConfigValue('qualityMetrics.menuLabel'),
+    basePath: '/quality-metrics',
   });
 }
 
@@ -78,6 +83,7 @@ if (getConfigValue('monitor.menuEnabled')) {
     to: monitorATMUrl.getUrl(),
     matches: monitorATMUrl.matches,
     text: 'Monitor',
+    basePath: '/monitor',
   });
 }
 
@@ -114,14 +120,59 @@ const itemsGlobalLeft: MenuProps['items'] = [
         JAEGER UI
       </Link>
     ),
-    key: 'JAEGER UI',
+    key: 'home',
   },
 ];
+
+// CRITICAL FIX: Enhanced route matching function
+function getActiveNavKey(pathname: string): string {
+  // Remove prefix if present
+  const cleanPath = pathname.replace(prefixUrl('/'), '/').replace(/^\/+/, '/');
+  
+  console.log('🔍 TopNav Debug:', { pathname, cleanPath });
+  
+  // Check each nav link
+  for (const navLink of NAV_LINKS) {
+    const basePath = navLink.basePath || '';
+    
+    // Direct path match
+    if (cleanPath === basePath) {
+      return basePath;
+    }
+    
+    // Sub-path match (e.g., /trace/123 matches /trace)
+    if (basePath && cleanPath.startsWith(basePath + '/')) {
+      return basePath;
+    }
+    
+    // Specific trace page handling
+    if (cleanPath.startsWith('/trace/') && !cleanPath.includes('/trace-diff')) {
+      return '/search'; // Trace pages are accessed from search
+    }
+    
+    // TraceDiff handling
+    if (cleanPath.includes('/trace-diff') || cleanPath.match(/\/trace\/.*\.\.\./)) {
+      return '/trace-diff';
+    }
+  }
+  
+  // Default fallback
+  if (cleanPath === '/' || cleanPath === '') {
+    return '/search';
+  }
+  
+  return cleanPath;
+}
 
 export function TopNavImpl(props: Props) {
   const { config, router } = props;
   const { pathname } = router.location;
   const menuItems = Array.isArray(config.menu) ? config.menu : [];
+
+  // CRITICAL FIX: Get the active navigation key
+  const activeKey = getActiveNavKey(pathname);
+  
+  console.log('🔍 TopNav Active Key:', { pathname, activeKey });
 
   const itemsGlobalRight: MenuProps['items'] = [
     {
@@ -144,22 +195,27 @@ export function TopNavImpl(props: Props) {
         selectable={false}
         className="ub-right Menu--item"
         disabledOverflow
-        selectedKeys={[pathname]}
+        selectedKeys={[]} // Right menu doesn't need selection
         items={itemsGlobalRight}
       />
       <Menu
         theme="dark"
         items={itemsGlobalLeft?.concat(
-          NAV_LINKS.map(({ matches, to, text }) => {
+          NAV_LINKS.map(({ matches, to, text, basePath }) => {
             const url = typeof to === 'string' ? to : to(props);
-            const key = matches(pathname) ? pathname : url;
-            return { key, label: <Link to={url}>{text}</Link> };
+            const key = basePath || url;
+            
+            return { 
+              key, 
+              label: <Link to={url}>{text}</Link> 
+            };
           })
         )}
         className="Menu--item"
         mode="horizontal"
         selectable={false}
-        selectedKeys={[pathname]}
+        // CRITICAL FIX: Use the calculated active key
+        selectedKeys={[activeKey]}
       />
     </div>
   );

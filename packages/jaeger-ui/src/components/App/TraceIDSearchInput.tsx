@@ -25,15 +25,17 @@ import withRouteProps from '../../utils/withRouteProps';
 
 type Props = {
   history: History;
+  navigate: (path: string) => void;
 };
 
 class TraceIDSearchInput extends React.PureComponent<Props> {
   goToTrace = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const target = event.target as any;
+    const {navigate} = this.props;
     const value = target.elements.idInput.value;
     if (value) {
-      this.props.history.push(getUrl(value));
+      navigate(getUrl(value));
     }
   };
 

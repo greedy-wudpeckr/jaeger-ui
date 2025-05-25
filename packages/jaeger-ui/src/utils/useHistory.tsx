@@ -13,18 +13,56 @@
 // limitations under the License.
 
 import React, { ReactNode, createContext, useContext, FC } from 'react';
-import { History } from 'history';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const HistoryContext = createContext<History | undefined>(undefined);
-interface IHistoryProviderProps {
-  children: ReactNode;
-  history: History;
+// Create a history-like interface for React Router v6
+interface HistoryLike {
+  push: (path: string) => void;
+  replace: (path: string) => void;
+  go: (delta: number) => void;
+  goBack: () => void;
+  goForward: () => void;
+  location: ReturnType<typeof useLocation>;
 }
 
-export const useHistory = (): History | undefined => {
-  return useContext(HistoryContext);
+const HistoryContext = createContext<HistoryLike | undefined>(undefined);
+
+interface IHistoryProviderProps {
+  children: ReactNode;
+}
+
+export const useHistory = (): HistoryLike => {
+  const context = useContext(HistoryContext);
+  if (!context) {
+    // Fallback for components not wrapped in HistoryProvider
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    return {
+      push: navigate,
+      replace: (path: string) => navigate(path, { replace: true }),
+      go: (delta: number) => window.history.go(delta),
+      goBack: () => window.history.back(),
+      goForward: () => window.history.forward(),
+      location,
+    };
+  }
+  return context;
 };
 
-export const HistoryProvider: FC<IHistoryProviderProps> = ({ children, history }) => {
-  return <HistoryContext.Provider value={history}>{children}</HistoryContext.Provider>;
+export const HistoryProvider: FC<IHistoryProviderProps> = ({ children }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Create history-like object using React Router v6 hooks
+  const historyLike: HistoryLike = {
+    push: navigate,
+    replace: (path: string) => navigate(path, { replace: true }),
+    go: (delta: number) => window.history.go(delta),
+    goBack: () => window.history.back(),
+    goForward: () => window.history.forward(),
+    location,
+  };
+
+  return <HistoryContext.Provider value={historyLike}>{children}</HistoryContext.Provider>;
 };

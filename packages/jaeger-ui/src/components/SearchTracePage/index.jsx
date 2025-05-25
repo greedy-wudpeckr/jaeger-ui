@@ -82,9 +82,9 @@ export class SearchTracePageImpl extends Component {
   };
 
   goToTrace = traceID => {
-    const { queryOfResults } = this.props;
+    const { queryOfResults , navigate} = this.props;
     const searchUrl = queryOfResults ? getUrl(stripEmbeddedState(queryOfResults)) : getUrl();
-    this.props.history.push(getTraceLocation(traceID, { fromSearch: searchUrl }));
+    navigate(getTraceLocation(traceID, { fromSearch: searchUrl }));
   };
 
   render() {
@@ -206,9 +206,7 @@ SearchTracePageImpl.propTypes = {
     })
   ),
   searchTraces: PropTypes.func,
-  history: PropTypes.shape({
-    push: PropTypes.func,
-  }),
+  navigate: PropTypes.func,
   fetchMultipleTraces: PropTypes.func,
   fetchServiceOperations: PropTypes.func,
   fetchServices: PropTypes.func,
@@ -302,7 +300,7 @@ export function mapStateToProps(state) {
   };
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps(dispatch, ownProps) { 
   const { fetchMultipleTraces, fetchServiceOperations, fetchServices, searchTraces } = bindActionCreators(
     jaegerApiActions,
     dispatch
@@ -317,6 +315,7 @@ function mapDispatchToProps(dispatch) {
     fetchServices,
     searchTraces,
     loadJsonTraces,
+    navigate: ownProps.navigate, 
   };
 }
 

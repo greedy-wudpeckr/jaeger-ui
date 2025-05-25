@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Router } from 'react-router-dom';
 import { Location } from 'history';
 
 import { ApiError } from './api-error';
@@ -44,6 +43,12 @@ export type LocationState = {
   fromSearch?: string;
 };
 
+// CRITICAL FIX: Define router type compatible with React Router v6
+export type RouterState = {
+  location: Location<LocationState>;
+  action: string;
+};
+
 export type ReduxState = {
   archive: TracesArchive;
   type: string;
@@ -55,9 +60,8 @@ export type ReduxState = {
     error: ApiError | TNil;
   };
   embedded: EmbeddedState;
-  router: Router & {
-    location: Location<LocationState>;
-  };
+  // CRITICAL FIX: Use proper router type for React Router v6
+  router: RouterState;
   services: {
     services: string[] | TNil;
     serverOpsForService: Record<string, string[]>;

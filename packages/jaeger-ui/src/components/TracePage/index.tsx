@@ -74,6 +74,7 @@ type TOwnProps = {
   history: RouterHistory;
   location: Location<LocationState>;
   params: { id: string };
+  match?: { params: { id: string } };
 };
 
 type TReduxProps = {
@@ -296,6 +297,10 @@ export class TracePageImpl extends React.PureComponent<TProps, TState> {
 
   ensureTraceFetched() {
     const { fetchTrace, location, trace, id } = this.props;
+     if (!id) {
+    console.error('TracePage: Cannot fetch trace - no ID provided');
+    return;
+  }
     if (!trace) {
       fetchTrace(id);
       return;
@@ -442,11 +447,31 @@ export class TracePageImpl extends React.PureComponent<TProps, TState> {
 
 // export for tests
 export function mapStateToProps(state: ReduxState, ownProps: TOwnProps): TReduxProps {
-  const { id } = ownProps.params;
+  const { id } = ownProps.params || ownProps.match?.params || {};
+
+   if (!id) {
+    console.error('TracePage: No trace ID found in route params', {
+      params: ownProps.params,
+      match: ownProps.match,
+      location: ownProps.location.pathname
+    });
+  }
+
+    let validId = '';
+  if (id && typeof id === 'string' && id !== '...' && /^[0-9a-fA-F]{16,32}$/i.test(id)) {
+    validId = id;
+  } else {
+    console.error('TracePage: Invalid trace ID format:', {
+      id,
+      pathname: ownProps.location?.pathname,
+      expected: 'hex string 16-32 characters',
+    });
+  }
+
   const { archive, config, embedded, router } = state;
   const { traces } = state.trace;
-  const trace = id ? traces[id] : null;
-  const archiveTraceState = id ? archive[id] : null;
+  const trace = validId ? traces[validId] : null;
+  const archiveTraceState = validId ? archive[validId] : null;
   const archiveEnabled = Boolean(config.archiveEnabled);
   const storageCapabilities = config.storageCapabilities;
   const { disableJsonView, criticalPathEnabled } = config;
@@ -461,7 +486,7 @@ export function mapStateToProps(state: ReduxState, ownProps: TOwnProps): TReduxP
     archiveTraceState,
     criticalPathEnabled,
     embedded,
-    id,
+    id: id || '',
     searchUrl,
     disableJsonView,
     trace,

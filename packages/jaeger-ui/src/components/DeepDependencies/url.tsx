@@ -21,12 +21,14 @@ import parseQuery from '../../utils/parseQuery';
 import { EDdgDensity, TDdgSparseUrlState } from '../../model/ddg/types';
 import prefixUrl from '../../utils/prefix-url';
 
+// Updated for React Router v6
 export const ROUTE_PATH = prefixUrl('/deep-dependencies');
 
-const ROUTE_MATCHER = { path: ROUTE_PATH, strict: true, exact: true };
+const ROUTE_MATCHER = { path: ROUTE_PATH, end: true, caseSensitive: false };
 
 export function matches(path: string) {
-  return Boolean(matchPath(path, ROUTE_MATCHER));
+  // Fixed parameter order for React Router v6
+  return Boolean(matchPath(ROUTE_MATCHER, path));
 }
 
 export function getUrl(args?: { [key: string]: unknown; showOp?: boolean }, baseUrl: string = ROUTE_PATH) {

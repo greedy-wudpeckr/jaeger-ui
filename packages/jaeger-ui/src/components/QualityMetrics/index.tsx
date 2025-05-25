@@ -37,10 +37,12 @@ import withRouteProps from '../../utils/withRouteProps';
 type TOwnProps = {
   history: RouterHistory;
   location: Location;
+  navigate: (path: string) => void;
 };
 
 type TDispatchProps = {
   fetchServices: () => void;
+  navigate: (path: string) => void;
 };
 
 type TReduxProps = {
@@ -107,13 +109,13 @@ export class UnconnectedQualityMetrics extends React.PureComponent<TProps, TStat
     if (!lookback) return;
     if (lookback < 1 || lookback !== Math.floor(lookback)) return;
 
-    const { history, service = '' } = this.props;
-    history.push(getUrl({ lookback, service }));
+    const { navigate, service = '' } = this.props;
+    navigate(getUrl({ lookback, service }));
   };
 
   setService = (service: string) => {
-    const { history, lookback } = this.props;
-    history.push(getUrl({ lookback, service }));
+    const { navigate, lookback } = this.props;
+    navigate(getUrl({ lookback, service }));
   };
 
   render() {
@@ -205,11 +207,12 @@ export function mapStateToProps(state: ReduxState, ownProps: TOwnProps): TReduxP
   };
 }
 
-export function mapDispatchToProps(dispatch: Dispatch<ReduxState>): TDispatchProps {
+export function mapDispatchToProps(dispatch: Dispatch<ReduxState>, ownProps: TOwnProps): TDispatchProps & { navigate: (path: string) => void } {
   const { fetchServices } = bindActionCreators(jaegerApiActions, dispatch);
 
   return {
     fetchServices,
+    navigate: ownProps.navigate,
   };
 }
 

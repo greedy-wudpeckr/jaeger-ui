@@ -66,6 +66,7 @@ export type TDispatchProps = {
   fetchDeepDependencyGraph?: (query: TDdgModelParams) => void;
   fetchServices?: () => void;
   fetchServiceServerOps?: (service: string) => void;
+  navigate: (path: string) => void;
   removeViewModifierFromIndices?: (
     kwarg: TDdgModelParams & { viewModifier: number; visibilityIndices: number[] }
   ) => void;
@@ -85,6 +86,7 @@ export type TOwnProps = {
   extraUrlArgs?: { [key: string]: unknown };
   history: RouterHistory;
   location: Location;
+  navigate: (path: string) => void;
   showSvcOpsHeader: boolean;
 };
 
@@ -255,11 +257,11 @@ export class DeepDependencyGraphPageImpl extends React.PureComponent<TProps, TSt
   };
 
   updateUrlState = (newValues: Partial<TDdgSparseUrlState>) => {
-    const { baseUrl, extraUrlArgs, graphState, history, uiFind, urlState } = this.props;
+    const { baseUrl, extraUrlArgs, graphState, navigate, uiFind, urlState } = this.props;
     const getUrlArg = { uiFind, ...urlState, ...newValues, ...extraUrlArgs };
     const hash = _get(graphState, 'model.hash');
     if (hash) getUrlArg.hash = hash;
-    history.push(getUrl(getUrlArg, baseUrl));
+    navigate(getUrl(getUrlArg, baseUrl));
   };
 
   render() {
@@ -434,7 +436,7 @@ export function mapStateToProps(state: ReduxState, ownProps: TOwnProps): TReduxP
 }
 
 // export for tests
-export function mapDispatchToProps(dispatch: Dispatch<ReduxState>): TDispatchProps {
+export function mapDispatchToProps(dispatch: Dispatch<ReduxState>, ownProps: TOwnProps): TDispatchProps & { navigate: (path: string) => void } {
   const { fetchDeepDependencyGraph, fetchServiceServerOps, fetchServices } = bindActionCreators(
     jaegerApiActions,
     dispatch
@@ -447,6 +449,7 @@ export function mapDispatchToProps(dispatch: Dispatch<ReduxState>): TDispatchPro
     fetchServiceServerOps,
     fetchServices,
     removeViewModifierFromIndices,
+    navigate: ownProps.navigate,
   };
 }
 

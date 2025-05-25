@@ -13,83 +13,45 @@
 // limitations under the License.
 
 import React from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import { History, Location } from 'history';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useHistory } from './useHistory';
 
-/**
- * Interface representing route-related props passed to the enhanced component.
- * @interface
- * @property {Location} location - The current location object containing information about the URL.
- * @property {string} pathname - The current URL pathname.
- * @property {string} search - The current URL search string.
- * @property {object} params - The URL parameters.
- * @property {History} history - The history object for navigation.
- */
-export type IWithRouteProps = {
-  location: Location;
-  pathname: string;
-  search: string;
-  params: object;
-  history: History;
-};
-
-/**
- * Enhances a React component with route-related props. Works similar to withRouter export from react-router-dom v5 below.
- * @function
- * @param {React.ElementType} WrappedComponent - The component to be enhanced.
- * @returns {React.Component} A higher-order component with route-related props.
- */
-export default function withRouteProps(WrappedComponent: React.ElementType) {
-  /**
-   * @function
-   * @param {IWithRouteProps|object} props - The props passed to the enhanced component.
-   * @returns {React.Component} The enhanced component with additional route-related props.
-   */
-  return function WithRouteProps(props: IWithRouteProps | object) {
-    /**
-     * The current location object containing information about the URL.
-     * @type {Location}
-     */
+function withRouteProps(Component: React.ComponentType<any>) {
+  return function WrappedComponent(props: Record<string, unknown>) {
     const location = useLocation();
-
-    /**
-     * The URL parameters extracted from the route.
-     * @type {object}
-     */
+    const navigate = useNavigate();
     const params = useParams();
-
-    /**
-     * The current URL pathname.
-     * @type {string}
-     */
-    const { pathname } = location;
-
-    /**
-     * The current URL search string.
-     * @type {string}
-     */
-    const { search } = location;
-
-    /**
-     * The history object for navigation.
-     * @type {History}
-     */
     const history = useHistory();
 
-    /**
-     * Renders the enhanced component with route-related props.
-     * @returns {React.Component} The enhanced component with additional route-related props.
-     */
-    return (
-      <WrappedComponent
-        {...props}
-        location={location}
-        pathname={pathname}
-        search={search}
-        params={params}
-        history={history}
-      />
-    );
+    // Ensure params is never undefined - CRITICAL FIX
+    const safeParams = params || {};
+
+    //   if (location.pathname.includes('/trace/')) {
+    //   console.log('🚨 withRouteProps CRITICAL DEBUG:', {
+    //     fullPathname: location.pathname,
+    //     reactRouterParams: params,
+    //     paramsKeys: Object.keys(params || {}),
+    //     paramsValues: Object.values(params || {}),
+    //     directIdParam: params?.id,
+    //     manualExtraction: location.pathname.split('/')[2], // Should be the trace ID
+    //     componentName: Component.displayName || Component.name,
+    //   });
+    // }
+
+    // Create router props object similar to v5 but with safe params
+    const routerProps = {
+      location,
+      navigate,
+      history,
+      match: {
+        params: safeParams,  // Use safe params here
+      },
+      // Also provide params directly for backward compatibility
+      params: safeParams,
+    };
+
+    return <Component {...props} {...routerProps} />;
   };
 }
+
+export default withRouteProps;
