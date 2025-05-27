@@ -15,8 +15,7 @@
 import queryString from 'query-string';
 import { matchPath } from 'react-router-dom';
 
-import getValidState from './getValidState';
-import TTraceDiffState from '../../types/TTraceDiffState';
+
 import prefixUrl from '../../utils/prefix-url';
 
 export type TDiffRouteParams = {
@@ -24,7 +23,8 @@ export type TDiffRouteParams = {
   b?: string | undefined;
 };
 
-export const ROUTE_PATH = prefixUrl('/trace/:a?\\.\\.\\.:b?');
+export const ROUTE_PATH = prefixUrl('/trace/:a?/:b?');
+
 
 const ROUTE_MATCHER = { path: ROUTE_PATH, end: true, caseSensitive: false };
 
